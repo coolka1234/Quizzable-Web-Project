@@ -35,11 +35,6 @@ Projekt polega na stworzeniu webowej aplikacji typu Kahoot, umożliwiającej pro
 - Wyniki po zakończeniu quizu
 
 
-## 3. Opis systemu i diagram UML
-
-*(Do uzupełnienia: opis + diagram UML)*
-
-
 ## 4. Architektura aplikacji
 
 **Model-View-Controller (MVC)**
