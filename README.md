@@ -10,7 +10,7 @@ Projekt polega na stworzeniu webowej aplikacji typu Kahoot, umożliwiającej pro
 - Udział w quizie i odpowiadanie na pytania w czasie rzeczywistym
 - Przechowywanie i udostępnianie baz pytań
 
-### Problemy do rozwiązania:
+### Problemy do rozwiązania
 
 - Logowanie SSO (OAuth)
 - Tworzenie i zarządzanie pokojami
@@ -22,40 +22,45 @@ Projekt polega na stworzeniu webowej aplikacji typu Kahoot, umożliwiającej pro
 ## 2. Zakres funkcjonalny
 
 ### Logowanie
+
 - Autoryzacja przez Google (OAuth 2.0)
 
 ### Panel użytkownika
+
 - Tworzenie pokoju
 - Zarządzanie pytaniami (dodawanie/edycja/usuwanie)
 - Przeglądanie innych baz pytań
 
 ### Interfejs gracza
+
 - Dołączanie po kodzie
 - Odpowiadanie w czasie rzeczywistym
 - Wyniki po zakończeniu quizu
 
-
 ## 4. Architektura aplikacji
 
-**Model-View-Controller (MVC)**
+### Model-View-Controller (MVC)
 
-### Uzasadnienie:
+### Uzasadnienie
+
 - Łatwa rozbudowa o nowe funkcje
 - Obsługa interakcji i spójność danych w czasie rzeczywistym
 - Porządek i klarowność kodu
 - Dobrze udokumentowany wzorzec
 
-
 ## 5. Proponowany stos technologiczny
 
 ### Backend
+
 - **Flask** – lekkie API
 - **Flask-SocketIO** – real-time
 - **Google OAuth** – logowanie
 
 ### Frontend
+
 - **HTML + JS** – interfejs użytkownika
 - **Tailwind CSS** – stylowanie
 
 ### Baza danych
+
 - **PostgreSQL (AWS Aurora)** – skalowalność i niezależność
