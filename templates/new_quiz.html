@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Dodaj nowy zestaw pytań</h2>
+
+<form method="POST" action="{{ url_for('new_quiz') }}" id="quiz-form">
+    <div>
+        <label for="category">Nazwa kategorii:</label><br>
+        <input type="text" id="category" name="category" required style="padding:8px; font-size:16px; width:100%; max-width:400px; margin-bottom:20px;">
+    </div>
+
+    <div id="questions-container">
+    </div>
+
+    <button type="button" id="add-question-btn" style="background:#4a6fa5; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; margin-top:15px;">+ Dodaj pytanie</button>
+    <button type="submit" style="background:#28a745; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; margin-left:10px;">Dodaj zestaw</button>
+</form>
+
+
+<script>
+  let questionCount = 0;
+
+  function createQuestion(index) {
+    const div = document.createElement('div');
+    div.classList.add('question-block');
+    div.dataset.index = index;
+
+    div.innerHTML = `
+      <button type="button" class="remove-question-btn" onclick="removeQuestion(this)">- Usuń pytanie</button>
+      <div class="question-header">
+        <input type="text" placeholder="Wpisz pytanie..." name="question_${index}" class="question-input" required />
+      </div>
+      <div class="answers-grid">
+        ${[1,2,3,4].map(i => `
+          <label class="answer" onclick="selectAnswer(event, ${index}, ${i})">
+            <input type="radio" name="correct_answer_${index}" value="${i}" style="display:none;" required>
+            <span>${String.fromCharCode(64 + i)}</span>
+            <input type="text" name="answer_${index}_${i}" placeholder="Odpowiedź..." required style="flex:1; margin-left:10px; padding:6px; border-radius:6px; border:none;"/>
+          </label>
+        `).join('')}
+      </div>
+    `;
+    return div;
+  }
+
+  function removeQuestion(button) {
+    button.closest('.question-block').remove();
+    updateQuestionIndexes();
+  }
+
+  function updateQuestionIndexes() {
+    const questions = document.querySelectorAll('.question-block');
+    questionCount = questions.length;
+    questions.forEach((block, i) => {
+      block.dataset.index = i;
+      block.querySelector('.question-input').name = `question_${i}`;
+      const radios = block.querySelectorAll('input[type="radio"]');
+      const texts = block.querySelectorAll('input[type="text"][name^="answer_"]');
+      radios.forEach((radio, idx) => {
+        radio.name = `correct_answer_${i}`;
+        radio.value = idx + 1;
+      });
+      texts.forEach((text, idx) => {
+        text.name = `answer_${i}_${idx+1}`;
+        text.placeholder = `Odpowiedź ${idx+1}`;
+      });
+    });
+  }
+
+  function selectAnswer(event, questionIdx, answerIdx) {
+    event.stopPropagation();
+    const questionBlock = document.querySelector(`.question-block[data-index="${questionIdx}"]`);
+    const answers = questionBlock.querySelectorAll('.answer');
+    answers.forEach(a => a.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    event.currentTarget.querySelector('input[type="radio"]').checked = true;
+  }
+
+  document.getElementById('add-question-btn').addEventListener('click', () => {
+    const container = document.getElementById('questions-container');
+    const newQuestion = createQuestion(questionCount);
+    container.appendChild(newQuestion);
+    questionCount++;
+  });
+
+  document.getElementById('add-question-btn').click();
+</script>
+{% endblock %}
