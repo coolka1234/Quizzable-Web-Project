@@ -5,7 +5,9 @@
 
 <form method="POST" action="{{ url_for('new_quiz') }}" id="quiz-form">
     <div>
-        <label for="category">Nazwa kategorii:</label><br>
+        <label for="name">Nazwa:</label><br>
+        <input type="text" id="name" name="name" required style="padding:8px; font-size:16px; width:100%; max-width:400px; margin-bottom:20px;">
+        <label for="category">kategoria:</label><br>
         <input type="text" id="category" name="category" required style="padding:8px; font-size:16px; width:100%; max-width:400px; margin-bottom:20px;">
     </div>
 
@@ -62,7 +64,7 @@
       });
       texts.forEach((text, idx) => {
         text.name = `answer_${i}_${idx+1}`;
-        text.placeholder = `Odpowiedź ${idx+1}`;
+        text.placeholder = `Odpowiedź...`;
       });
     });
   }
