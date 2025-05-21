@@ -1,15 +1,22 @@
 from dotenv import load_dotenv
 import os
 from flask import Flask, redirect, url_for, session, render_template, g, request
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 from flask_migrate import Migrate
+from functions import generate_game_code
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
+
+
+
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -117,6 +124,49 @@ def index():
     quizzes = Quiz.query.all()
     return render_template("index.html", quizzes=quizzes)
 
+@app.route('/create')
+def create(quiz_id=None):
+    code = generate_game_code()
+    quiz = Quiz.query.get(quiz_id) if quiz_id else None
+    if quiz:
+        questions = quiz.questions
+        answers = {question.id: question.answers for question in questions}
+    else:
+        questions = []
+        answers = {}
+    return render_template('lobby.html', game_code=code, questions=questions, answers=answers)
+
+
+@app.route('/join/<code>')
+def join(code):
+    return render_template('lobby.html', game_code=code)
+
+@socketio.on('join_game')
+def on_join(data):
+    name = data['name']
+    code = data['game_code']
+    join_room(code)
+    emit('player_joined', {'name': name}, room=code)
+
+@socketio.on('start_game')
+def start_game(data):
+    code = data['game_code']
+    emit('next_question', {'q': "Sample Question?"}, room=code)
+
+
+@socketio.on('submit_answer')
+def answer(data):
+    code = data['game_code']
+    sid = request.sid
+    # TODO: tu musi być logika sprawdzajaca odpowiedź
+
+@socketio.on('disconnect')
+def on_disconnect():
+    return
+    if request.sid in games[code]['players']:
+        leave_room(code)
+        del games[code]['players'][request.sid]
+
 @app.route('/new_quiz', methods=['GET', 'POST'])
 def new_quiz():
     if request.method == 'POST':
@@ -157,7 +207,7 @@ def new_quiz():
                 db.session.add(answer)
 
             index += 1
-
+        print("Dodano pytania i odpowiedzi do bazy danych")
         db.session.commit()
         return redirect(url_for('index'))
     return render_template('new_quiz.html')
@@ -174,4 +224,4 @@ def google_callback():
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
-    app.run(debug=True, ssl_context='adhoc')
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000, ssl_context='adhoc')
