@@ -153,6 +153,42 @@ def start_game(data):
     code = data['game_code']
     emit('next_question', {'q': "Sample Question?"}, room=code)
 
+@app.route('/question/<int:quiz_id>/<int:index>', methods=['GET'])
+def question(quiz_id, index):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    questions = quiz.questions
+    
+    if index < 0 or index >= len(questions):
+        return redirect(url_for('index'))
+        
+    question = questions[index]
+    
+    return render_template('question.html', 
+                          question=question,
+                          current_question_index=index,
+                          total_questions=len(questions),
+                          game_code=session.get('game_code', ''))
+
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    question_id = request.form.get('question_id')
+    selected_answer_id = request.form.get('selected_answer')
+    
+    question = Question.query.get_or_404(question_id)
+    quiz = Quiz.query.get_or_404(question.quiz_id)
+    questions = quiz.questions
+    current_index = [i for i, q in enumerate(questions) if q.id == int(question_id)][0]
+    
+    if current_index < len(questions) - 1:
+        return redirect(url_for('question', quiz_id=quiz.id, index=current_index+1))
+    else:
+        return redirect(url_for('results', quiz_id=quiz.id))
+
+@app.route('/results/<int:quiz_id>')
+def results(quiz_id):
+    # TODO
+    return render_template('results.html', quiz_id=quiz_id)
+
 
 @socketio.on('submit_answer')
 def answer(data):

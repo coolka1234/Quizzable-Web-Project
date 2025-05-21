@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizzable - Question</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Quizzable</h1>
+            <div class="quiz-progress">
+                <span>Question {{ current_question_number }} of {{ total_questions }}</span>
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                </div>
+            </div>
+        </header>
+
+        <main class="question-container">
+            <div class="question-box">
+                <h2>{{ question.text }}</h2>
+                
+                <form action="{{ url_for('submit_answer') }}" method="POST">
+                    <input type="hidden" name="question_id" value="{{ question.id }}">
+                    
+                    <div class="options-list">
+                        {% for option in question.options %}
+                        <div class="option">
+                            <input type="radio" id="option{{ loop.index }}" name="answer" value="{{ option.id }}" required>
+                            <label for="option{{ loop.index }}">{{ option.text }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" class="btn primary">
+                            {% if is_last_question %}Finish{% else %}Next{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2025 Quizzable - Test your knowledge</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
