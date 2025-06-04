@@ -44,3 +44,28 @@ class Answer(db.Model):
 
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
 
+class Result(db.Model):
+    __tablename__ = 'results'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User', backref='results')
+    quiz = db.relationship('Quiz', backref='results')
+
+class UserAnswer(db.Model):
+    __tablename__ = 'user_answers'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    answer_id = db.Column(db.Integer, db.ForeignKey('answers.id'), nullable=False)
+    game_code = db.Column(db.String(10), nullable=False)
+    
+    user = db.relationship('User', backref='answers')
+    question = db.relationship('Question', backref='user_answers')
+    answer = db.relationship('Answer', backref='user_answers')
+

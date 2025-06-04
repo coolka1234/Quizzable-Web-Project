@@ -1,33 +1,97 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% if quizzes %}
-    <div class="container my-4">
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            {% for quiz in quizzes %}
-            <div class="col">
-                <a href="{{ url_for('create', quiz_id=quiz.id) }}" class="text-decoration-none text-dark">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ quiz.name }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ quiz.category }}</h6>
-                            <p class="card-text mb-1">
-                                <strong>Utworzony przez:</strong> {{ quiz.user.name if quiz.user else 'Nieznany' }}
-                            </p>
-                            <p class="card-text mb-1">
-                                <strong>Utworzono:</strong> {{ quiz.created_at.strftime('%Y-%m-%d %H:%M') }}
-                            </p>
-                            <p class="card-text">
-                                <strong>Ilość pytań:</strong> {{ quiz.questions|length }}
-                            </p>
-                        </div>
+<div class="container-fluid my-4">
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Kategorie</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <button class="list-group-item list-group-item-action active" data-category="all">
+                            Wszystkie kategorie
+                        </button>
+                        {% set categories = [] %}
+                        {% for quiz in quizzes %}
+                            {% if quiz.category not in categories %}
+                                {% set _ = categories.append(quiz.category) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for category in categories | sort %}
+                            <button class="list-group-item list-group-item-action" data-category="{{ category }}">
+                                {{ category }}
+                            </button>
+                        {% endfor %}
                     </div>
-                </a>
+                </div>
             </div>
-            {% endfor %}
         </div>
-    {% else %}
-        <p>Nie znaleziono quizów.</p>
-    {% endif %}
+        
+        <div class="col-md-9">
+            {% if quizzes %}
+                <div id="quizContainer" class="row row-cols-1 row-cols-md-3 g-4">
+                    {% for quiz in quizzes %}
+                    <div class="col quiz-card" data-category="{{ quiz.category }}">
+                        <a href="{{ url_for('quiz', quiz_id=quiz.id) }}" class="text-decoration-none text-dark">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ quiz.name }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">{{ quiz.category }}</h6>
+                                    <p class="card-text mb-1">
+                                        <strong>Utworzony przez:</strong> {{ quiz.user.name if quiz.user else 'Nieznany' }}
+                                    </p>
+                                    <p class="card-text mb-1">
+                                        <strong>Utworzono:</strong> {{ quiz.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Ilość pytań:</strong> {{ quiz.questions|length }}
+                                    </p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">Nie znaleziono quizów.</div>
+            {% endif %}
+        </div>
     </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoryButtons = document.querySelectorAll('[data-category]');
+        const quizCards = document.querySelectorAll('.quiz-card');
+        
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                
+                if (this.classList.contains('active') && category !== 'all') {
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    document.querySelector('[data-category="all"]').classList.add('active');
+                    quizCards.forEach(card => card.style.display = 'block');
+                } else {
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    if (category === 'all') {
+                        quizCards.forEach(card => card.style.display = 'block');
+                    } else {
+                        quizCards.forEach(card => {
+                            if (card.getAttribute('data-category') === category) {
+                                card.style.display = 'block';
+                            } else {
+                                card.style.display = 'none';
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

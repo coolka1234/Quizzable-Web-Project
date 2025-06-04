@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, request
-from app.models import db, User, Quiz, Question, Answer
+from app.models import db, User, Quiz, Question, Answer, UserAnswer
 from app.functions import generate_game_code
 from datetime import datetime, timezone
 
@@ -85,21 +85,29 @@ def register_routes(app, google, session, g):
 
         print(len(questions), index)
 
-        if index < 0 or index >= len(questions):
-            return redirect(url_for('index'))  # or show results
-
-        question = questions[index]
+        if index < len(questions):
+            question = questions[index]
+        else:
+            question = questions[-1]
 
         if request.method == 'POST':
             selected = request.form.get('answer')
-            #TODO zapisywanie odpowiedzi do bazy danych
-            print(f"Selected answer ID: {selected}")
+            
+            if selected:
+                user_answer = UserAnswer(
+                    user_id=g.user.id,
+                    question_id=question.id,
+                    answer_id=selected,
+                    game_code=session.get('game_code', '')
+                )
+                db.session.add(user_answer)
+                db.session.commit()
 
             next_index = index + 1
             if next_index <= len(questions):
                 return redirect(url_for('question', quiz_id=quiz_id, index=index))
             else:
-                return redirect(url_for('quiz_end', quiz_id=quiz_id))  # jakies  podsumowanie lub koniec quizu
+                return redirect(url_for('results', quiz_id=quiz_id))
 
         return render_template('question.html',
                             question=question,
@@ -113,6 +121,16 @@ def register_routes(app, google, session, g):
         question_id = request.form.get('question_id')
         selected_answer_id = request.form.get('selected_answer')
         
+        if selected_answer_id:
+            user_answer = UserAnswer(
+                user_id=g.user.id,
+                question_id=question_id,
+                answer_id=selected_answer_id,
+                game_code=session.get('game_code', '')
+            )
+            db.session.add(user_answer)
+            db.session.commit()
+        
         question = Question.query.get_or_404(question_id)
         quiz = Quiz.query.get_or_404(question.quiz_id)
         questions = quiz.questions
@@ -125,8 +143,56 @@ def register_routes(app, google, session, g):
 
     @app.route('/results/<int:quiz_id>')
     def results(quiz_id):
-        # TODO
-        return render_template('results.html', quiz_id=quiz_id)
+        quiz = Quiz.query.get_or_404(quiz_id)
+        game_code = session.get('game_code', '')
+        
+        # Get all questions for this quiz
+        questions = quiz.questions
+        
+        # For each user who participated, calculate their score
+        user_scores = {}
+        
+        # Get all user answers for this quiz session
+        all_answers = (UserAnswer.query
+                      .join(Question, UserAnswer.question_id == Question.id)
+                      .filter(Question.quiz_id == quiz_id, 
+                              UserAnswer.game_code == game_code)
+                      .all())
+        
+        # Group answers by user
+        for answer in all_answers:
+            if answer.user_id not in user_scores:
+                user_scores[answer.user_id] = {
+                    'user': User.query.get(answer.user_id),
+                    'correct': 0,
+                    'total': 0
+                }
+            
+            selected_answer = Answer.query.get(answer.answer_id)
+            if selected_answer and selected_answer.is_correct:
+                user_scores[answer.user_id]['correct'] += 1
+            user_scores[answer.user_id]['total'] += 1
+            
+        # Calculate percentage scores
+        for user_id in user_scores:
+            score = user_scores[user_id]
+            if score['total'] > 0:
+                score['percentage'] = round((score['correct'] / score['total']) * 100)
+            else:
+                score['percentage'] = 0
+        
+        # Sort by score (highest first)
+        sorted_scores = sorted(
+            user_scores.values(), 
+            key=lambda x: (x['percentage'], x['correct']), 
+            reverse=True
+        )
+        
+        return render_template('results.html', 
+                              quiz=quiz, 
+                              scores=sorted_scores, 
+                              total_questions=len(questions))
+
     
     @app.route('/new_quiz', methods=['GET', 'POST'])
     def new_quiz():

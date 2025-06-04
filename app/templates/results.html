@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Results{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Results: {{ quiz.name }}</h2>
+        </div>
+        <div class="card-body">
+            <h3 class="mb-4 text-center">Final Scores</h3>
+            
+            {% if scores %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Rank</th>
+                                <th>User</th>
+                                <th>Score</th>
+                                <th>Correct Answers</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for score in scores %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ score.user.name }}</td>
+                                    <td>{{ score.correct }}/{{ total_questions }}</td>
+                                    <td>{{ score.correct }}/{{ score.total }}</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                style="width: {{ score.percentage }}%;" 
+                                                aria-valuenow="{{ score.percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                                {{ score.percentage }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No results found for this quiz session.
+                </div>
+            {% endif %}
+            
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
