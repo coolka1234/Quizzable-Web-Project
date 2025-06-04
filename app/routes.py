@@ -83,17 +83,23 @@ def register_routes(app, google, session, g):
         quiz = Quiz.query.get_or_404(quiz_id)
         questions = quiz.questions
 
+        print(len(questions), index)
+
         if index < 0 or index >= len(questions):
-            return redirect(url_for('index'))
+            return redirect(url_for('index'))  # or show results
 
         question = questions[index]
 
         if request.method == 'POST':
             selected = request.form.get('answer')
-            # TODO: Save the selected answer to the database or session
-            print(f"User selected answer ID: {selected}")
+            #TODO zapisywanie odpowiedzi do bazy danych
+            print(f"Selected answer ID: {selected}")
 
-            return redirect(url_for('question', quiz_id=quiz_id, index=index + 1))
+            next_index = index + 1
+            if next_index <= len(questions):
+                return redirect(url_for('question', quiz_id=quiz_id, index=index))
+            else:
+                return redirect(url_for('quiz_end', quiz_id=quiz_id))  # jakies  podsumowanie lub koniec quizu
 
         return render_template('question.html',
                             question=question,
