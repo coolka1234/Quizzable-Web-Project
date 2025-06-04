@@ -1,4 +1,5 @@
 <h1>Game Code: {{ game_code }}</h1>
+<h2>Quiz ID: {{ quiz_id }}</h2>
 <input id="name" placeholder="Your Name">
 <button onclick="startGame()">Start Game</button>
 
@@ -8,13 +9,14 @@
 <script>
 let socket = io();
 let code = "{{ game_code }}";
+const quizId = "{{ quiz_id }}";
 
 const hostName = "Host"; 
 socket.emit("join_game", { name: hostName, game_code: code });
 
 
 function startGame() {
-    socket.emit("start_game", {game_code: code});
+    socket.emit("start_game", {game_code: code, quiz_id: quizId});
 }
 
 socket.on("player_joined", data => {

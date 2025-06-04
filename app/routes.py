@@ -50,7 +50,7 @@ def register_routes(app, google, session, g):
         quizzes = Quiz.query.all()
         return render_template("index.html", quizzes=quizzes)
 
-    @app.route('/create')
+    @app.route('/create/<quiz_id>', methods=['GET', 'POST'])
     def create(quiz_id=None):
         code = generate_game_code()
         quiz = Quiz.query.get(quiz_id) if quiz_id else None
@@ -60,29 +60,47 @@ def register_routes(app, google, session, g):
         else:
             questions = []
             answers = {}
-        return render_template('lobby_host.html', game_code=code, questions=questions, answers=answers)
+        return render_template('lobby_host.html', game_code=code, quiz_id=quiz_id , questions=questions, answers=answers)
 
 
     @app.route('/join')
     def join():
         return render_template('lobby_join.html')
     
+    @app.route('/quiz/<int:quiz_id>')
+    def quiz(quiz_id):
+        quiz = Quiz.query.get_or_404(quiz_id)
+        questions = quiz.questions
+        if not questions:
+            return render_template('no_questions.html', quiz=quiz)
+        
+        session['game_code'] = generate_game_code()
+        return render_template('quiz.html', quiz=quiz, questions=questions, game_code=session['game_code'])
+    
 
-    @app.route('/question/<int:quiz_id>/<int:index>', methods=['GET'])
+    @app.route('/question/<int:quiz_id>/<int:index>', methods=['GET', 'POST'])
     def question(quiz_id, index):
         quiz = Quiz.query.get_or_404(quiz_id)
         questions = quiz.questions
-        
+
         if index < 0 or index >= len(questions):
             return redirect(url_for('index'))
-            
+
         question = questions[index]
-        
-        return render_template('question.html', 
+
+        if request.method == 'POST':
+            selected = request.form.get('answer')
+            # TODO: Save the selected answer to the database or session
+            print(f"User selected answer ID: {selected}")
+
+            return redirect(url_for('question', quiz_id=quiz_id, index=index + 1))
+
+        return render_template('question.html',
                             question=question,
                             current_question_index=index,
                             total_questions=len(questions),
                             game_code=session.get('game_code', ''))
+
 
     @app.route('/submit_answer', methods=['POST'])
     def submit_answer():

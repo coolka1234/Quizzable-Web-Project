@@ -14,6 +14,10 @@ function joinGame() {
     socket.emit("join_game", { name: name, game_code: code });
 }
 
+socket.on("game_started", data => {
+    window.location.href = `/question/${data.quiz_id}/0`;
+});
+
 
 socket.on("next_question", data => {
     alert("Next Question: " + data.q);
