@@ -1,13 +1,29 @@
-<h2>Question {{ current_question_index + 1 }} of {{ total_questions }}</h2>
-<p>{{ question.text }}</p>
+{% extends "base.html" %}
 
-<form id="answerForm" method="POST" action="{{ url_for('question', quiz_id=question.quiz_id, index=current_question_index + 1) }}">
-    {% for answer in question.answers %}
-        <div>
-            <input type="radio" name="answer" value="{{ answer.id }}" id="ans{{ loop.index }}" required>
-            <label for="ans{{ loop.index }}">{{ answer.label }}. {{ answer.text }}</label>
+{% block title %}Question {{ current_question_index + 1 }} - Quiz{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Question {{ current_question_index + 1 }} of {{ total_questions }}</h2>
         </div>
-    {% endfor %}
-    <br>
-    <button type="submit">Next</button>
-</form>
+        <div class="card-body">
+            <p class="lead mb-4">{{ question.text }}</p>
+
+            <form id="answerForm" method="POST" action="{{ url_for('question', quiz_id=question.quiz_id, index=current_question_index + 1) }}">
+                <div class="list-group">
+                    {% for answer in question.answers %}
+                    <label class="list-group-item list-group-item-action">
+                        <input type="radio" name="answer" value="{{ answer.id }}" id="ans{{ loop.index }}" required class="form-check-input me-2">
+                        {{ answer.label }}. {{ answer.text }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <br>
+                <button type="submit" class="btn btn-success btn-lg w-100">Next Question</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

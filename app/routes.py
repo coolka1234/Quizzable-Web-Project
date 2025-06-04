@@ -21,8 +21,8 @@ def register_routes(app, google, session, g):
                 user = User.query.filter_by(email=email).first()
                 if not user:
                     user = User(
-                        name=name,
-                        email=email
+                        name=name, # type: ignore
+                        email=email # type: ignore
                     )
                     db.session.add(user)
                     db.session.commit()
@@ -116,7 +116,7 @@ def register_routes(app, google, session, g):
         question = Question.query.get_or_404(question_id)
         quiz = Quiz.query.get_or_404(question.quiz_id)
         questions = quiz.questions
-        current_index = [i for i, q in enumerate(questions) if q.id == int(question_id)][0]
+        current_index = [i for i, q in enumerate(questions) if q.id == int(question_id)][0] #type: ignore
         
         if current_index < len(questions) - 1:
             return redirect(url_for('question', quiz_id=quiz.id, index=current_index+1))
@@ -135,7 +135,7 @@ def register_routes(app, google, session, g):
             name = request.form.get("name")
             category = request.form.get("category")
 
-            new_quiz = Quiz(name=name, category=category, user_id=g.user.id, created_at=datetime.now(timezone.utc))
+            new_quiz = Quiz(name=name, category=category, user_id=g.user.id, created_at=datetime.now(timezone.utc)) # type: ignore
             db.session.add(new_quiz)
             db.session.flush()
 
@@ -145,7 +145,7 @@ def register_routes(app, google, session, g):
                 if not question_text:
                     break
 
-                question = Question(text=question_text, quiz_id=new_quiz.id)
+                question = Question(text=question_text, quiz_id=new_quiz.id) # type: ignore
                 db.session.add(question)
                 db.session.flush()
 
@@ -160,10 +160,10 @@ def register_routes(app, google, session, g):
                     is_correct = str(i) == correct_answer
 
                     answer = Answer(
-                        text=answer_text,
-                        label=label,
-                        is_correct=is_correct,
-                        question_id=question.id
+                        text=answer_text, # type: ignore
+                        label=label, # type: ignore
+                        is_correct=is_correct, # type: ignore
+                        question_id=question.id # type: ignore
                     )
                     db.session.add(answer)
 

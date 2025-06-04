@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz - {{ quiz.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">{{ quiz.name }}</h1>
+
+    {% if questions %}
+        <div id="quiz-area">
+            <p class="text-center">Loading questions...</p>
+            <div class="text-center mt-4">
+                 <a href="{{ url_for('question', quiz_id=quiz.id, index=0) }}" class="btn btn-primary btn-lg">Start Quiz</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center" role="alert">
+            This quiz has no questions yet.
+        </div>
+    {% endif %}
+
+    <div class="text-center mt-3">
+        <p>Game Code: <strong class="game-code">{{ game_code }}</strong></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+</script>
+{% endblock %}

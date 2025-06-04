@@ -1,32 +1,92 @@
-<h1>Game Code: {{ game_code }}</h1>
-<h2>Quiz ID: {{ quiz_id }}</h2>
-<input id="name" placeholder="Your Name">
-<button onclick="startGame()">Start Game</button>
+{% extends "base.html" %}
 
-<ul id="players"></ul>
+{% block title %}Host Quiz Lobby{% endblock %}
 
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm text-center">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">Quiz Lobby</h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Share this game code with your players:</p>
+                    <h2 class="display-4 game-code mb-3 p-3 bg-light border rounded">{{ game_code }}</h2>
+                    <p class="text-muted">Quiz ID: {{ quiz_id }}</p>
+                    
+                    <!-- <div class="mb-3 col-md-6 mx-auto">
+                        <label for="name" class="form-label">Your Name (Host):</label>
+                        <input type="text" id="name" class="form-control form-control-lg" placeholder="Enter your name as Host" value="Host" readonly>
+                    </div> -->
+
+                    <button onclick="startGame()" class="btn btn-success btn-lg w-50 mt-3">Start Game</button>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h3 class="h5">Players Joined:</h3>
+                <ul id="players" class="list-group">
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script src="//cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script>
 let socket = io();
-let code = "{{ game_code }}";
+const gameCode = "{{ game_code }}";
 const quizId = "{{ quiz_id }}";
-
 const hostName = "Host"; 
-socket.emit("join_game", { name: hostName, game_code: code });
 
+document.addEventListener('DOMContentLoaded', (event) => {
+    socket.emit("join_game", { name: hostName, game_code: gameCode });
+});
 
 function startGame() {
-    socket.emit("start_game", {game_code: code, quiz_id: quizId});
+    const playersList = document.getElementById("players");
+    if (playersList.children.length <= 1 && playersList.innerText.includes(hostName)) { // Check if only host is present
+        if (!confirm("No other players have joined yet. Do you want to start the game with just the host?")) {
+            return;
+        }
+    }
+    socket.emit("start_game", { game_code: gameCode, quiz_id: quizId });
 }
 
 socket.on("player_joined", data => {
-    let li = document.createElement("li");
-    li.innerText = data.name;
-    document.getElementById("players").appendChild(li);
+    const playersList = document.getElementById("players");
+    const playerId = `player-${data.name.replace(/\s+/g, '-')}-${gameCode}`; 
+    if (!document.getElementById(playerId)) {
+        let li = document.createElement("li");
+        li.id = playerId;
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+        li.innerText = data.name;
+        
+        if (data.name === hostName) {
+            let badge = document.createElement("span");
+            badge.className = "badge bg-info rounded-pill";
+            badge.innerText = "Host";
+            li.appendChild(badge);
+        }
+        
+        playersList.appendChild(li);
+    }
 });
 
-
-socket.on("next_question", data => {
-    alert("Next Question: " + data.q);
+socket.on("game_started", data => {
+    window.location.href = `/question/${data.quiz_id}/0`; 
 });
+
+socket.on("connect_error", (err) => {
+  alert(`Connection failed: ${err.message}. Please check the server and your network.`);
+});
+
+socket.on("error_starting_game", (data) => {
+    alert(data.message); 
+});
+
 </script>
+{% endblock %}
