@@ -4,6 +4,10 @@
 
 {% block content %}
 <div class="container mt-5">
+    <div class="progress mb-4">
+        <div class="progress-bar" role="progressbar" style="width: {{ (current_question_index / total_questions) * 100 }}%" 
+             aria-valuenow="{{ current_question_index }}" aria-valuemin="0" aria-valuemax="{{ total_questions }}"></div>
+    </div>
     <div class="card shadow-sm">
         <div class="card-header bg-primary text-white">
             <h2 class="h5 mb-0">Question {{ current_question_index + 1 }} of {{ total_questions }}</h2>
@@ -12,7 +16,9 @@
             <p class="lead mb-4">{{ question.text }}</p>
 
             <form id="answerForm" method="POST" action="{{ url_for('question', quiz_id=question.quiz_id, index=current_question_index + 1) }}">
-                <div class="list-group">
+                <input type="hidden" id="player_name" name="player_name" value="">
+                <input type="hidden" name="question_id" value="{{ question.id }}">
+                <div class="list-group mb-4">
                     {% for answer in question.answers %}
                     <label class="list-group-item list-group-item-action">
                         <input type="radio" name="answer" value="{{ answer.id }}" id="ans{{ loop.index }}" required class="form-check-input me-2">
@@ -20,10 +26,20 @@
                     </label>
                     {% endfor %}
                 </div>
-                <br>
                 <button type="submit" class="btn btn-success btn-lg w-100">Next Question</button>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const playerName = urlParams.get('player_name') || '';
+    
+    document.getElementById('player_name').value = playerName;
+});
+</script>
 {% endblock %}

@@ -2,21 +2,32 @@ from flask import render_template, redirect, url_for, request
 from app.models import db, User, Quiz, Question, Answer, UserAnswer
 from app.functions import generate_game_code
 from datetime import datetime, timezone
+import uuid  
 
 
 def register_routes(app, google, session, g):
 
     @app.before_request
     def before_request():
-        g.logged_in = google.authorized
-        if g.logged_in:
+        if 'tab_id' not in session:
+            session['tab_id'] = str(uuid.uuid4())
+        
+        g.tab_id = session.get('tab_id')
+        
+        tab_key = f"logged_in_{g.tab_id}"
+        g.logged_in = session.get(tab_key, False) and google.authorized
+        
+        if google.authorized:
             resp = google.get("/oauth2/v1/userinfo")
             if resp.ok:
                 user_info = resp.json()
                 name = user_info.get("name")
                 email = user_info.get("email")
-                session['name'] = name
-                session['email'] = email
+                
+                session[f'name_{g.tab_id}'] = name
+                session[f'email_{g.tab_id}'] = email
+
+                session[tab_key] = True
 
                 user = User.query.filter_by(email=email).first()
                 if not user:
@@ -28,12 +39,14 @@ def register_routes(app, google, session, g):
                     db.session.commit()
                 g.user = user
             else:
-                session.pop('name', None)
-                session.pop('email', None)
+                session.pop(f'name_{g.tab_id}', None)
+                session.pop(f'email_{g.tab_id}', None)
+                session[tab_key] = False
                 g.user = None
         else:
-            session.pop('name', None)
-            session.pop('email', None)
+            session.pop(f'name_{g.tab_id}', None)
+            session.pop(f'email_{g.tab_id}', None)
+            session[tab_key] = False
             g.user = None
 
     @app.route("/")
@@ -90,22 +103,40 @@ def register_routes(app, google, session, g):
         else:
             question = questions[-1]
 
+        player_name = request.form.get('player_name') or request.args.get('player_name')
+        if player_name:
+            session['player_name'] = player_name
+        else:
+            player_name = session.get('player_name', '')
+
         if request.method == 'POST':
             selected = request.form.get('answer')
             
             if selected:
-                user_answer = UserAnswer(
-                    user_id=g.user.id,
-                    question_id=question.id,
-                    answer_id=selected,
-                    game_code=session.get('game_code', '')
-                )
-                db.session.add(user_answer)
-                db.session.commit()
+                user = User.query.filter_by(name=player_name).first()
+                if not user and player_name:
+                    user = User(
+                        name=player_name,
+                        email=f"temp_{uuid.uuid4()}@example.com"  # Generate temporary unique email
+                    )
+                    db.session.add(user)
+                    db.session.commit()
+                
+                user_id = user.id if user else g.user.id if hasattr(g, 'user') and g.user else None
+                
+                if user_id:
+                    user_answer = UserAnswer(
+                        user_id=user_id,
+                        question_id=question.id,
+                        answer_id=selected,
+                        game_code=session.get('game_code', '')
+                    )
+                    db.session.add(user_answer)
+                    db.session.commit()
 
             next_index = index + 1
-            if next_index <= len(questions):
-                return redirect(url_for('question', quiz_id=quiz_id, index=index))
+            if next_index < len(questions):
+                return redirect(url_for('question', quiz_id=quiz_id, index=next_index, player_name=player_name))
             else:
                 return redirect(url_for('results', quiz_id=quiz_id))
 
@@ -120,16 +151,34 @@ def register_routes(app, google, session, g):
     def submit_answer():
         question_id = request.form.get('question_id')
         selected_answer_id = request.form.get('selected_answer')
+        player_name = request.form.get('player_name')
+        
+        if player_name:
+            session['player_name'] = player_name
+        else:
+            player_name = session.get('player_name', '')
         
         if selected_answer_id:
-            user_answer = UserAnswer(
-                user_id=g.user.id,
-                question_id=question_id,
-                answer_id=selected_answer_id,
-                game_code=session.get('game_code', '')
-            )
-            db.session.add(user_answer)
-            db.session.commit()
+            user = User.query.filter_by(name=player_name).first()
+            if not user and player_name:
+                user = User(
+                    name=player_name,
+                    email=f"temp_{uuid.uuid4()}@example.com"  
+                )
+                db.session.add(user)
+                db.session.commit()
+            
+            user_id = user.id if user else g.user.id if hasattr(g, 'user') and g.user else None
+            
+            if user_id:
+                user_answer = UserAnswer(
+                    user_id=user_id,
+                    question_id=question_id,
+                    answer_id=selected_answer_id,
+                    game_code=session.get('game_code', '')
+                )
+                db.session.add(user_answer)
+                db.session.commit()
         
         question = Question.query.get_or_404(question_id)
         quiz = Quiz.query.get_or_404(question.quiz_id)
@@ -137,7 +186,7 @@ def register_routes(app, google, session, g):
         current_index = [i for i, q in enumerate(questions) if q.id == int(question_id)][0] #type: ignore
         
         if current_index < len(questions) - 1:
-            return redirect(url_for('question', quiz_id=quiz.id, index=current_index+1))
+            return redirect(url_for('question', quiz_id=quiz.id, index=current_index+1, player_name=player_name))
         else:
             return redirect(url_for('results', quiz_id=quiz.id))
 
@@ -146,24 +195,21 @@ def register_routes(app, google, session, g):
         quiz = Quiz.query.get_or_404(quiz_id)
         game_code = session.get('game_code', '')
         
-        # Get all questions for this quiz
         questions = quiz.questions
         
-        # For each user who participated, calculate their score
         user_scores = {}
         
-        # Get all user answers for this quiz session
         all_answers = (UserAnswer.query
                       .join(Question, UserAnswer.question_id == Question.id)
                       .filter(Question.quiz_id == quiz_id, 
                               UserAnswer.game_code == game_code)
                       .all())
         
-        # Group answers by user
         for answer in all_answers:
             if answer.user_id not in user_scores:
+                user = User.query.get(answer.user_id)
                 user_scores[answer.user_id] = {
-                    'user': User.query.get(answer.user_id),
+                    'user': user,
                     'correct': 0,
                     'total': 0
                 }
@@ -173,7 +219,6 @@ def register_routes(app, google, session, g):
                 user_scores[answer.user_id]['correct'] += 1
             user_scores[answer.user_id]['total'] += 1
             
-        # Calculate percentage scores
         for user_id in user_scores:
             score = user_scores[user_id]
             if score['total'] > 0:
@@ -181,7 +226,6 @@ def register_routes(app, google, session, g):
             else:
                 score['percentage'] = 0
         
-        # Sort by score (highest first)
         sorted_scores = sorted(
             user_scores.values(), 
             key=lambda x: (x['percentage'], x['correct']), 
@@ -241,7 +285,11 @@ def register_routes(app, google, session, g):
 
     @app.route("/logout")
     def logout():
-        session.clear()
+        if 'tab_id' in session:
+            tab_id = session['tab_id']
+            session.pop(f'name_{tab_id}', None)
+            session.pop(f'email_{tab_id}', None)
+            session.pop(f'logged_in_{tab_id}', None)
         return redirect(url_for("login_page"))
 
     @app.route("/login/google/callback")

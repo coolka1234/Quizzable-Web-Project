@@ -34,7 +34,7 @@
                 <div id="quizContainer" class="row row-cols-1 row-cols-md-3 g-4">
                     {% for quiz in quizzes %}
                     <div class="col quiz-card" data-category="{{ quiz.category }}">
-                        <a href="{{ url_for('quiz', quiz_id=quiz.id) }}" class="text-decoration-none text-dark">
+                        <a href="{{ url_for('create', quiz_id=quiz.id) }}" class="text-decoration-none text-dark">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-body">
                                     <h5 class="card-title">{{ quiz.name }}</h5>
