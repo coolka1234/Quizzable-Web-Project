@@ -53,7 +53,6 @@ function joinGame() {
         return;
     }
     
-    // Just pass the name directly without storing in localStorage
     socket.emit("join_game", { name: name, game_code: code });
 
     document.getElementById("name").disabled = true;
@@ -74,7 +73,6 @@ socket.on("player_joined", data => {
 });
 
 socket.on("game_started", data => {
-    // Pass the player name directly in the URL without using localStorage
     const playerName = document.getElementById("name").value;
     window.location.href = `/question/${data.quiz_id}/0?player_name=${encodeURIComponent(playerName)}`;
 });

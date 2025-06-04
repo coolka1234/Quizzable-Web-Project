@@ -17,7 +17,9 @@ class Quiz(db.Model):
     name = db.Column(db.String(150), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db# Added for generating unique tab identifiers= db.relationship('User', backref='quizzes')
+    created_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User', backref='quizzes')
 
     questions = db.relationship('Question', backref='quiz', cascade="all, delete-orphan", lazy=True)
 
@@ -49,7 +51,6 @@ class Result(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
     score = db.Column(db.Integer, nullable=False)
-    completed_at = db.Column(db.DateTime, nullable=False)
 
     user = db.relationship('User', backref='results')
     quiz = db.relationship('Quiz', backref='results')
