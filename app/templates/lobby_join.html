@@ -1,7 +1,6 @@
 <input id="name" placeholder="Your Name">
 <input id="code" placeholder="Game Code" oninput="code = this.value">
 <button onclick="joinGame()">Join</button>
-<button onclick="startGame()">Start Game</button>
 
 <ul id="players"></ul>
 
@@ -12,18 +11,9 @@ let code = "";
 
 function joinGame() {
     let name = document.getElementById("name").value;
-    socket.emit("join_game", {name: name, game_code: code});
+    socket.emit("join_game", { name: name, game_code: code });
 }
 
-function startGame() {
-    socket.emit("start_game", {game_code: code});
-}
-
-socket.on("player_joined", data => {
-    let li = document.createElement("li");
-    li.innerText = data.name;
-    document.getElementById("players").appendChild(li);
-});
 
 socket.on("next_question", data => {
     alert("Next Question: " + data.q);

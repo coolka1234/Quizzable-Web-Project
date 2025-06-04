@@ -4,12 +4,14 @@ from flask_socketio import SocketIO, join_room, leave_room
 
 def register_socketio_events(socketio):
 
-    @socketio.on('join_game')
-    def on_join(data):
-        name = data['name']
-        code = data['game_code']
+    @socketio.on("join_game")
+    def handle_join_game(data):
+        name = data["name"]
+        code = data["game_code"]
         join_room(code)
-        emit('player_joined', {'name': name}, room=code)
+        print(f"Player {name} joined game {code}")
+        emit("player_joined", {"name": name}, room=code)
+
 
     @socketio.on('start_game')
     def start_game(data):
