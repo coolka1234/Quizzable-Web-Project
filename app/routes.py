@@ -60,12 +60,12 @@ def register_routes(app, google, session, g):
         else:
             questions = []
             answers = {}
-        return render_template('lobby.html', game_code=code, questions=questions, answers=answers)
+        return render_template('lobby_host.html', game_code=code, questions=questions, answers=answers)
 
 
-    @app.route('/join/<code>')
-    def join(code):
-        return render_template('lobby.html', game_code=code)
+    @app.route('/join')
+    def join():
+        return render_template('lobby_join.html')
     
 
     @app.route('/question/<int:quiz_id>/<int:index>', methods=['GET'])

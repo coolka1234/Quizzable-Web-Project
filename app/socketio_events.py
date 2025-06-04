@@ -19,7 +19,7 @@ def register_socketio_events(socketio):
     @socketio.on('submit_answer')
     def answer(data):
         code = data['game_code']
-        sid = request.sid
+        # sid = request.sid
         # TODO: tu musi być logika sprawdzajaca odpowiedź
 
     @socketio.on('disconnect')
