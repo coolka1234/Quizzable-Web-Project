@@ -15,15 +15,17 @@
         <div class="card-body">
             <p class="lead mb-4">{{ question.text }}</p>
 
-            <form id="answerForm" method="POST" action="{{ url_for('question', quiz_id=question.quiz_id, index=current_question_index + 1) }}">
+            <form id="answerForm" method="POST" action="{{ url_for('submit_answer') }}">
                 <input type="hidden" name="question_id" value="{{ question.id }}">
                 <input type="hidden" id="question-index" value="{{ current_question_index }}">
                 <input type="hidden" id="total-questions" value="{{ total_questions }}">
-                <input type="hidden" id="game-code" value="{{ game_code }}">
+                <input type="hidden" id="game-code" name="game_code" value="{{ game_code }}">
                 <input type="hidden" id="start-time" value="{{ start_time }}">
                 
-                {% if request.args.get('player_name') %}
+                {% if g.user %}
                     <input type="hidden" id="player-name" name="player_name" value="{{ g.user.name }}">
+                {% elif request.args.get('player_name') %}
+                    <input type="hidden" id="player-name" name="player_name" value="{{ request.args.get('player_name') }}">
                 {% endif %}
                 
                 <div class="list-group mb-4">

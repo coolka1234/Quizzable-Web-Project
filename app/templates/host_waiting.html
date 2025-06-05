@@ -31,7 +31,7 @@
         </div>
     </div>
     <div class="mt-3 flex justify-content-center" >
-        <button class="btn btn-secondary btn-lg w-50" onclick=results()>Show Results</button>
+        <button class="btn btn-secondary btn-lg w-50" onclick="results()">Show Results</button>
     </div>
 </div>
 {% endblock %}
@@ -39,9 +39,13 @@
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
     document.addEventListener('DOMContentLoaded', function() {
         const socket = io();
         const gameCode = document.getElementById('game-code').innerText;
+        const quizId = document.getElementById('quiz-id').value;
         const playerScores = document.getElementById('player-scores');
         
         const players = {};
@@ -59,7 +63,8 @@
                     progress: 1,
                     totalQuestions: totalQuestions,
                     correct: correct ? 1 : 0,
-                    time: time
+                    time: parseFloat(time),
+                    completed: false
                 };
                 
                 const row = document.createElement('tr');
@@ -68,38 +73,72 @@
                     <td>${name}</td>
                     <td>${players[name].progress}/${totalQuestions}</td>
                     <td>${players[name].correct}</td>
-                    <td>${time}s</td>
+                    <td>${players[name].time.toFixed(1)}s</td>
                 `;
                 playerScores.appendChild(row);
             } else {
                 players[name].progress++;
                 if (correct) players[name].correct++;
-                players[name].time = parseFloat(players[name].time || 0) + parseFloat(time);
-                // players[name].time += time;
+                players[name].time += parseFloat(time);
                 
                 const row = document.getElementById(`player-${name}`);
                 row.innerHTML = `
                     <td>${name}</td>
                     <td>${players[name].progress}/${totalQuestions}</td>
                     <td>${players[name].correct}</td>
-                    <td>${players[name].time}s</td>
+                    <td>${players[name].time.toFixed(1)}s</td>
                 `;
-                console.log(typeof players[name].time);
             }
             
             if (players[name].progress >= totalQuestions) {
+                players[name].completed = true;
                 document.getElementById(`player-${name}`).classList.add('table-success');
+                
+                const allCompleted = Object.values(players).every(player => player.completed);
+                if (allCompleted && Object.keys(players).length > 0) {
+                    console.log("All players completed!");
+                    socket.emit('all_players_completed', {
+                        game_code: gameCode,
+                        quiz_id: quizId
+                    });
+                }
             }
+            
+            fetch('/api/save_score', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    player_name: name,
+                    game_code: gameCode,
+                    quiz_id: quizId,
+                    correct: players[name].correct,
+                    total: players[name].totalQuestions,
+                    time: players[name].time
+                })
+            }).then(response => {
+                if (response.ok) {
+                    console.log(`Score saved for ${name}`);
+                } else {
+                    console.error(`Failed to save score for ${name}`);
+                }
+            }).catch(error => {
+                console.error('Error saving score:', error);
+            });
         });
         
-        socket.on('quiz_completed', function(data) {
+        socket.on('quiz_completed', async function(data) {
             const quizId = data.quiz_id;
-            window.location.href = `/results/${quizId}`;
+            await sleep(1)
+            window.location.href = `/results/${quizId}?game_code=${gameCode}`;
         });
     });
-    function results() {
+    async function results() {
         const quizId = document.getElementById('quiz-id').value;
-        window.location.href = `/results/${quizId}`;
+        const gameCode = document.getElementById('game-code').innerText;
+        await sleep(1);
+        window.location.href = `/results/${quizId}?game_code=${gameCode}`;
     }
 </script>
 {% endblock %}

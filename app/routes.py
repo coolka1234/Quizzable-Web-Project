@@ -197,7 +197,7 @@ def register_routes(app, google, session, g):
             if next_index <= len(questions):
                 return redirect(url_for('question', quiz_id=quiz_id, index=index, player_name=g.user.name, start_time=time()))
             else:
-                return redirect(url_for('results', quiz_id=quiz_id))
+                return redirect(url_for('results', quiz_id=quiz_id, game_code=session.get('game_code', '')))
 
         return render_template('question.html',
                             question=question,
@@ -211,6 +211,7 @@ def register_routes(app, google, session, g):
         question_id = request.form.get('question_id')
         selected_answer_id = request.form.get('selected_answer')
         player_name = request.form.get('player_name')
+        game_code = request.form.get('game_code', session.get('game_code', ''))
         
         if player_name:
             session['player_name'] = player_name
@@ -234,7 +235,7 @@ def register_routes(app, google, session, g):
                     user_id=user_id,
                     question_id=question_id,
                     answer_id=selected_answer_id,
-                    game_code=session.get('game_code', '')
+                    game_code=game_code
                 )
                 db.session.add(user_answer)
                 db.session.commit()
@@ -245,32 +246,42 @@ def register_routes(app, google, session, g):
         current_index = [i for i, q in enumerate(questions) if q.id == int(question_id)][0] #type: ignore
         
         if current_index < len(questions) - 1:
-            return redirect(url_for('question', quiz_id=quiz.id, index=current_index+1, player_name=player_name))
+            return redirect(url_for('question', quiz_id=quiz.id, index=current_index+1, player_name=player_name, start_time=time()))
         else:
             return redirect(url_for('results', quiz_id=quiz.id))
 
     @app.route('/results/<int:quiz_id>')
     def results(quiz_id):
         quiz = Quiz.query.get_or_404(quiz_id)
-        game_code = session.get('game_code', '')
+        game_code = request.args.get('game_code') or session.get('game_code', '')
         
         questions = quiz.questions
+        total_questions = len(questions)
         
         user_scores = {}
         
-        all_answers = (UserAnswer.query
-                      .join(Question, UserAnswer.question_id == Question.id)
-                      .filter(Question.quiz_id == quiz_id, 
-                              UserAnswer.game_code == game_code)
-                      .all())
+        query = (UserAnswer.query
+                .join(Question, UserAnswer.question_id == Question.id)
+                .filter(Question.quiz_id == quiz_id))
+        
+        print(f"Results query: {query}")
+                
+        # if game_code:
+        #     query = query.filter(UserAnswer.game_code == game_code)
+            
+        all_answers = query.all()
         
         for answer in all_answers:
             if answer.user_id not in user_scores:
                 user = User.query.get(answer.user_id)
+                if not user:
+                    continue
+                    
                 user_scores[answer.user_id] = {
                     'user': user,
                     'correct': 0,
-                    'total': 0
+                    'total': 0,
+                    'time': 0
                 }
             
             selected_answer = Answer.query.get(answer.answer_id)
@@ -294,8 +305,8 @@ def register_routes(app, google, session, g):
         return render_template('results.html', 
                               quiz=quiz, 
                               scores=sorted_scores, 
-                              total_questions=len(questions))
-
+                              total_questions=total_questions,
+                              game_code=game_code)
     
     @app.route('/new_quiz', methods=['GET', 'POST'])
     def new_quiz():
@@ -374,3 +385,33 @@ def register_routes(app, google, session, g):
         if not google.authorized:
             return "Nie udało się zalogować przez Google.", 400
         return redirect(url_for("index"))
+    
+    @app.route('/api/save_score', methods=['POST'])
+    def save_score():
+        try:
+            data = request.get_json()
+            if not data:
+                return {'error': 'No data provided'}, 400
+                
+            player_name = data.get('player_name')
+            game_code = data.get('game_code')
+            quiz_id = data.get('quiz_id')
+            
+            if not player_name or not game_code or not quiz_id:
+                return {'error': 'Missing required fields'}, 400
+            
+            user = User.query.filter_by(name=player_name).first()
+            if not user:
+                user = User(
+                    name=player_name,
+                    email=f"temp_{uuid.uuid4()}@example.com"
+                )
+                db.session.add(user)
+                db.session.commit()
+                
+            session['game_code'] = game_code
+                
+            return {'success': True}, 200
+        except Exception as e:
+            print(f"Error saving score: {str(e)}")
+            return {'error': str(e)}, 500
