@@ -22,29 +22,29 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('index') }}">
-                            <i class="bi bi-house-door me-1"></i>Strona główna
+                            <i class="bi bi-house-door me-1"></i>Main Page
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('new_quiz') }}">
-                            <i class="bi bi-plus-circle me-1"></i>Dodaj nowy zestaw
+                            <i class="bi bi-plus-circle me-1"></i>Create Quiz
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('join') }}">
-                            <i class="bi bi-people me-1"></i>Dołącz do gry
+                            <i class="bi bi-people me-1"></i>Join Quiz
                         </a>
                     </li>
                     {% if g.user and g.user.is_admin %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin') }}">
-                            <i class="bi bi-gear-fill me-1"></i>Admin
+                            <i class="bi bi-gear-fill me-1"></i>Admin Panel
                         </a>
                     </li>
                     {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('logout') }}">
-                            <i class="bi bi-box-arrow-right me-1"></i>Wyloguj się
+                            <i class="bi bi-box-arrow-right me-1"></i>Log out
                         </a>
                     </li>
                     <!-- <li class="nav-item">

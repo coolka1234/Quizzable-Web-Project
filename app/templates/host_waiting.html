@@ -75,7 +75,7 @@
                 players[name].progress++;
                 if (correct) players[name].correct++;
                 players[name].time = parseFloat(players[name].time || 0) + parseFloat(time);
-                players[name].time += time;
+                // players[name].time += time;
                 
                 const row = document.getElementById(`player-${name}`);
                 row.innerHTML = `
@@ -84,6 +84,7 @@
                     <td>${players[name].correct}</td>
                     <td>${players[name].time}s</td>
                 `;
+                console.log(typeof players[name].time);
             }
             
             if (players[name].progress >= totalQuestions) {

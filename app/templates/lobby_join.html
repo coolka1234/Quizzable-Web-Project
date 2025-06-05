@@ -13,10 +13,6 @@
                 <div class="card-body">
                     <form id="joinForm">
                         <div class="mb-3">
-                            <label for="name" class="form-label">Your Name:</label>
-                            <input type="text" id="name" class="form-control form-control-lg" placeholder="Enter your name" required>
-                        </div>
-                        <div class="mb-3">
                             <label for="code" class="form-label">Game Code:</label>
                             <input type="text" id="code" class="form-control form-control-lg" placeholder="Enter game code" oninput="code = this.value" required>
                         </div>
@@ -24,6 +20,7 @@
                     </form>
                 </div>
             </div>
+            <input type="hidden" id="g_name" value="{{ user.name }}">
 
             <div class="mt-4">
                 <h3 class="h5">Players in Lobby:</h3>
@@ -42,7 +39,7 @@ let socket = io();
 let code = "";
 
 function joinGame() {
-    let name = document.getElementById("name").value;
+    let name = document.getElementById("g_name").value;
     let code = document.getElementById("code").value;
     if (!name.trim()) {
         alert("Please enter your name.");
@@ -55,7 +52,6 @@ function joinGame() {
     
     socket.emit("join_game", { name: name, game_code: code });
 
-    document.getElementById("name").disabled = true;
     document.getElementById("code").disabled = true;
     document.querySelector("#joinForm button").disabled = true;
     document.querySelector("#joinForm button").innerText = "Joining...";
@@ -73,13 +69,12 @@ socket.on("player_joined", data => {
 });
 
 socket.on("game_started", data => {
-    const playerName = document.getElementById("name").value;
+    const playerName = document.getElementById("g_name").value;
     window.location.href = `/question/${data.quiz_id}/0?player_name=${encodeURIComponent(playerName)}`;
 });
 
 socket.on("connect_error", (err) => {
   alert(`Connection failed: ${err.message}. Please check the server and your network.`);
-    document.getElementById("name").disabled = false;
     document.getElementById("code").disabled = false;
     const joinButton = document.querySelector("#joinForm button");
     joinButton.disabled = false;
@@ -88,7 +83,6 @@ socket.on("connect_error", (err) => {
 
 socket.on("error_joining", (data) => {
     alert(data.message);
-    document.getElementById("name").disabled = false;
     document.getElementById("code").disabled = false;
     const joinButton = document.querySelector("#joinForm button");
     joinButton.disabled = false;

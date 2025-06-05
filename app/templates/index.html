@@ -6,12 +6,12 @@
         <div class="col-md-3 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Kategorie</h5>
+                    <h5 class="mb-0">Categories</h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
                         <button class="list-group-item list-group-item-action active" data-category="all">
-                            Wszystkie kategorie
+                            All categories
                         </button>
                         {% set categories = [] %}
                         {% for quiz in quizzes %}
@@ -40,13 +40,13 @@
                                     <h5 class="card-title">{{ quiz.name }}</h5>
                                     <h6 class="card-subtitle mb-2 text-muted">{{ quiz.category }}</h6>
                                     <p class="card-text mb-1">
-                                        <strong>Utworzony przez:</strong> {{ quiz.user.name if quiz.user else 'Nieznany' }}
+                                        <strong>Created by:</strong> {{ quiz.user.name if quiz.user else 'Nieznany' }}
                                     </p>
                                     <p class="card-text mb-1">
-                                        <strong>Utworzono:</strong> {{ quiz.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                        <strong>Created at:</strong> {{ quiz.created_at.strftime('%Y-%m-%d') }}
                                     </p>
                                     <p class="card-text">
-                                        <strong>Ilość pytań:</strong> {{ quiz.questions|length }}
+                                        <strong>Number of questions:</strong> {{ quiz.questions|length }}
                                     </p>
                                 </div>
                             </div>
@@ -55,7 +55,7 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="alert alert-info">Nie znaleziono quizów.</div>
+                <div class="alert alert-info">No quizzes found.</div>
             {% endif %}
         </div>
     </div>

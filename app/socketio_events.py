@@ -8,6 +8,7 @@ def register_socketio_events(socketio):
     def handle_join_game(data):
         name = data["name"]
         code = data["game_code"]
+        
         join_room(code)
         print(f"Player {name} joined game {code}")
         emit("player_joined", {"name": name}, room=code) # type: ignore

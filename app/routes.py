@@ -83,10 +83,10 @@ def register_routes(app, google, session, g):
         flash(f"Admin status for {user.name} has been {'enabled' if user.is_admin else 'disabled'}")
         return redirect(url_for("admin"))
         
-    @app.route("/admin/delete/<string:model_type>/<int:item_id>", methods=["POST"])
+    @app.route("/admin/delete/<string:model_type>/<int:item_id>", methods=["POST", "GET"])
     def delete_item(model_type, item_id):
         if not g.logged_in or not hasattr(g, 'user') or not g.user or not g.user.is_admin:
-            abort(403)
+            return redirect(url_for("index"))
             
         model_map = {
             "user": User,
@@ -103,7 +103,10 @@ def register_routes(app, google, session, g):
         db.session.delete(item)
         db.session.commit()
         flash(f"{model_type.capitalize()} has been deleted")
-        return redirect(url_for("admin"))
+        if g.user.is_admin:
+            return redirect(url_for("admin"))
+        else:
+            return redirect(url_for("index"))
 
     @app.route("/")
     def login_page():
@@ -134,7 +137,7 @@ def register_routes(app, google, session, g):
 
     @app.route('/join')
     def join():
-        return render_template('lobby_join.html')
+        return render_template('lobby_join.html', user=g.user, logged_in=g.logged_in)
     
     @app.route('/quiz/<int:quiz_id>')
     def quiz(quiz_id):
@@ -192,7 +195,7 @@ def register_routes(app, google, session, g):
 
             next_index = index + 1
             if next_index <= len(questions):
-                return redirect(url_for('question', quiz_id=quiz_id, index=index, player_name=player_name, start_time=time()))
+                return redirect(url_for('question', quiz_id=quiz_id, index=index, player_name=g.user.name, start_time=time()))
             else:
                 return redirect(url_for('results', quiz_id=quiz_id))
 

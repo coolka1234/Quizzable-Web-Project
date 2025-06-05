@@ -23,7 +23,7 @@
                 <input type="hidden" id="start-time" value="{{ start_time }}">
                 
                 {% if request.args.get('player_name') %}
-                    <input type="hidden" id="player-name" name="player_name" value="{{ request.args.get('player_name') }}">
+                    <input type="hidden" id="player-name" name="player_name" value="{{ g.user.name }}">
                 {% endif %}
                 
                 <div class="list-group mb-4">

@@ -5,17 +5,17 @@
 
 <form method="POST" action="{{ url_for('new_quiz') }}" id="quiz-form">
     <div>
-        <label for="name">Nazwa:</label><br>
+        <label for="name">Name:</label><br>
         <input type="text" id="name" name="name" required style="padding:8px; font-size:16px; width:100%; max-width:400px; margin-bottom:20px;">
-        <label for="category">kategoria:</label><br>
+        <label for="category">Category:</label><br>
         <input type="text" id="category" name="category" required style="padding:8px; font-size:16px; width:100%; max-width:400px; margin-bottom:20px;">
     </div>
 
     <div id="questions-container">
     </div>
 
-    <button type="button" id="add-question-btn" style="background:#4a6fa5; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; margin-top:15px;">+ Dodaj pytanie</button>
-    <button type="submit" style="background:#28a745; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; margin-left:10px;">Dodaj zestaw</button>
+    <button type="button" id="add-question-btn" style="background:#4a6fa5; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; margin-top:15px;">+ Add Question</button>
+    <button type="submit" style="background:#28a745; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; margin-left:10px;">Save</button>
 </form>
 
 
@@ -28,16 +28,16 @@
     div.dataset.index = index;
 
     div.innerHTML = `
-      <button type="button" class="remove-question-btn" onclick="removeQuestion(this)">- Usuń pytanie</button>
+      <button type="button" class="remove-question-btn" onclick="removeQuestion(this)">- Delete Question</button>
       <div class="question-header">
-        <input type="text" placeholder="Wpisz pytanie..." name="question_${index}" class="question-input" required />
+        <input type="text" placeholder="Submit question..." name="question_${index}" class="question-input" required />
       </div>
       <div class="answers-grid">
         ${[1,2,3,4].map(i => `
           <label class="answer" onclick="selectAnswer(event, ${index}, ${i})">
             <input type="radio" name="correct_answer_${index}" value="${i}" style="display:none;" required>
             <span>${String.fromCharCode(64 + i)}</span>
-            <input type="text" name="answer_${index}_${i}" placeholder="Odpowiedź..." required style="flex:1; margin-left:10px; padding:6px; border-radius:6px; border:none;"/>
+            <input type="text" name="answer_${index}_${i}" placeholder="Answer..." required style="flex:1; margin-left:10px; padding:6px; border-radius:6px; border:none;"/>
           </label>
         `).join('')}
       </div>
