@@ -2,6 +2,7 @@ from flask import render_template, redirect, url_for, request, flash, abort
 from app.models import db, User, Quiz, Question, Answer, UserAnswer
 from app.functions import generate_game_code
 from datetime import datetime, timezone
+from time import time
 import uuid  
 
 
@@ -172,7 +173,7 @@ def register_routes(app, google, session, g):
                 if not user and player_name:
                     user = User(
                         name=player_name,
-                        email=f"temp_{uuid.uuid4()}@example.com"  # Generate temporary unique email
+                        email=f"temp_{uuid.uuid4()}@example.com" 
                     )
                     db.session.add(user)
                     db.session.commit()
@@ -190,8 +191,8 @@ def register_routes(app, google, session, g):
                     db.session.commit()
 
             next_index = index + 1
-            if next_index < len(questions):
-                return redirect(url_for('question', quiz_id=quiz_id, index=next_index, player_name=player_name))
+            if next_index <= len(questions):
+                return redirect(url_for('question', quiz_id=quiz_id, index=index, player_name=player_name, start_time=time()))
             else:
                 return redirect(url_for('results', quiz_id=quiz_id))
 
@@ -337,6 +338,24 @@ def register_routes(app, google, session, g):
             db.session.commit()
             return redirect(url_for('index'))
         return render_template('new_quiz.html')
+    
+    @app.route("/host_waiting/<int:quiz_id>/<string:game_code>")
+    def host_waiting(game_code=None, quiz_id=None):
+        if not g.logged_in:
+            return redirect(url_for("login_page"))
+        
+        
+        if not game_code or not quiz_id:
+            print("Missing game code or quiz ID")
+            flash("Missing game code or quiz ID")
+            return redirect(url_for("index"))
+        
+        quiz = Quiz.query.get_or_404(quiz_id)
+        
+        return render_template("host_waiting.html", 
+                               game_code=game_code, 
+                               quiz_id=quiz_id,
+                               quiz=quiz)
 
     @app.route("/logout")
     def logout():

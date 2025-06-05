@@ -17,15 +17,29 @@
 
             <form id="answerForm" method="POST" action="{{ url_for('question', quiz_id=question.quiz_id, index=current_question_index + 1) }}">
                 <input type="hidden" name="question_id" value="{{ question.id }}">
+                <input type="hidden" id="question-index" value="{{ current_question_index }}">
+                <input type="hidden" id="total-questions" value="{{ total_questions }}">
+                <input type="hidden" id="game-code" value="{{ game_code }}">
+                <input type="hidden" id="start-time" value="{{ start_time }}">
+                
+                {% if request.args.get('player_name') %}
+                    <input type="hidden" id="player-name" name="player_name" value="{{ request.args.get('player_name') }}">
+                {% endif %}
+                
                 <div class="list-group mb-4">
                     {% for answer in question.answers %}
-                    <label class="list-group-item list-group-item-action">
-                        <input type="radio" name="answer" value="{{ answer.id }}" id="ans{{ loop.index }}" required class="form-check-input me-2">
-                        {{ answer.label }}. {{ answer.text }}
-                    </label>
+                        <div class="form-check mb-2">
+                            <input type="radio" name="selected_answer" id="answer_{{ answer.id }}" value="{{ answer.id }}" class="form-check-input">
+                            <label for="answer_{{ answer.id }}" class="form-check-label list-group-item list-group-item-action">
+                                <strong>{{ answer.label }}.</strong> {{ answer.text }}
+                            </label>
+                        </div>
                     {% endfor %}
                 </div>
-                <button type="submit" class="btn btn-success btn-lg w-100">Next Question</button>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">Next</button>
+                </div>
             </form>
         </div>
     </div>
@@ -33,12 +47,50 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const playerName = urlParams.get('player_name') || '';
-    
-    document.getElementById('player_name').value = playerName;
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        const socket = io();
+        const startTime = parseInt(document.getElementById('start-time').value) || Date.now();
+        const gameCode = document.getElementById('game-code').value;
+        const questionIndex = parseInt(document.getElementById('question-index').value);
+        const totalQuestions = parseInt(document.getElementById('total-questions').value);
+        const playerNameInput = document.getElementById('player-name');
+        const playerName = playerNameInput ? playerNameInput.value : 'Anonymous';
+        
+        socket.emit('join_game', {
+            name: playerName,
+            game_code: gameCode
+        });
+        
+        const answerForm = document.getElementById('answerForm');
+        answerForm.addEventListener('submit', function(e) {
+            
+            const endTime = Date.now();
+            const timeTaken = (endTime - startTime) / 1000; 
+            
+            const formData = new FormData(answerForm);
+            const selectedAnswerId = formData.get('selected_answer');
+            const questionId = formData.get('question_id');
+            
+            let isCorrect = false;
+            {% for answer in question.answers %}
+                if (selectedAnswerId === "{{ answer.id }}" && {{ answer.is_correct|tojson }}) {
+                    isCorrect = true;
+                }
+            {% endfor %}
+            
+            socket.emit('submit_player_answer', {
+                player_name: playerName,
+                game_code: gameCode,
+                question_index: questionIndex,
+                total_questions: totalQuestions,
+                answer_id: selectedAnswerId,
+                is_correct: isCorrect,
+                time: timeTaken.toFixed(1)
+            });
+            
+        });
+    });
 </script>
 {% endblock %}

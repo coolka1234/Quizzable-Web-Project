@@ -54,6 +54,7 @@ function startGame() {
         }
     }
     socket.emit("start_game", { game_code: gameCode, quiz_id: quizId });
+    socket.emit("start_game_host", { game_code: gameCode, quiz_id: quizId });
 }
 
 socket.on("player_joined", data => {
@@ -76,8 +77,8 @@ socket.on("player_joined", data => {
     }
 });
 
-socket.on("game_started", data => {
-    window.location.href = `/question/${data.quiz_id}/0`; 
+socket.on("game_started_host", data => {
+    window.location.href = `/host_waiting/${data.quiz_id}/${gameCode}`; 
 });
 
 socket.on("connect_error", (err) => {

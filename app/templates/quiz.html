@@ -10,7 +10,7 @@
         <div id="quiz-area">
             <p class="text-center">Loading questions...</p>
             <div class="text-center mt-4">
-                 <a href="{{ url_for('question', quiz_id=quiz.id, index=0) }}" class="btn btn-primary btn-lg">Start Quiz</a>
+                 <button id="start-quiz" class="btn btn-primary btn-lg">Start Quiz</button>
             </div>
         </div>
     {% else %}
@@ -26,6 +26,26 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const socket = io();
+        const gameCode = document.querySelector('.game-code').innerText;
+        const quizId = {{ quiz.id }};
+        
+        socket.emit('join_game', {
+            name: 'Host',
+            game_code: gameCode
+        });
+        
+        document.getElementById('start-quiz').addEventListener('click', function() {
+            socket.emit('start_game_host', {
+                game_code: gameCode,
+                quiz_id: quizId
+            });
+            
+            window.location.href = `/host_waiting?game_code=${gameCode}&quiz_id=${quizId}`;
+        });
+    });
 </script>
 {% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Waiting Room - Host{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Game in Progress</h1>
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="text-center">Game Code: <span id="game-code">{{ game_code }}</span></h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4 class="text-center mb-3">Live Scores</h4>
+                    <table class="table table-striped" id="score-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Progress</th>
+                                <th>Correct</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="player-scores">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const socket = io();
+        const gameCode = document.getElementById('game-code').innerText;
+        const playerScores = document.getElementById('player-scores');
+        
+        const players = {};
+        
+        socket.emit('join_game', {
+            name: 'Host',
+            game_code: gameCode
+        });
+        
+        socket.on('player_answer', function(data) {
+            const { name, questionIndex, totalQuestions, correct, time } = data;
+            
+            if (!players[name]) {
+                players[name] = {
+                    progress: 1,
+                    totalQuestions: totalQuestions,
+                    correct: correct ? 1 : 0,
+                    time: time
+                };
+                
+                const row = document.createElement('tr');
+                row.id = `player-${name}`;
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td>${players[name].progress}/${totalQuestions}</td>
+                    <td>${players[name].correct}</td>
+                    <td>${time}s</td>
+                `;
+                playerScores.appendChild(row);
+            } else {
+                players[name].progress++;
+                if (correct) players[name].correct++;
+                players[name].time = parseFloat(players[name].time || 0) + parseFloat(time);
+                players[name].time += time;
+                
+                const row = document.getElementById(`player-${name}`);
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td>${players[name].progress}/${totalQuestions}</td>
+                    <td>${players[name].correct}</td>
+                    <td>${players[name].time}s</td>
+                `;
+            }
+            
+            if (players[name].progress >= totalQuestions) {
+                document.getElementById(`player-${name}`).classList.add('table-success');
+            }
+        });
+        
+        socket.on('quiz_completed', function(data) {
+            const quizId = data.quiz_id;
+            window.location.href = `/results/${quizId}`;
+        });
+    });
+</script>
+{% endblock %}

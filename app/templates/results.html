@@ -18,7 +18,6 @@
                             <tr>
                                 <th>Rank</th>
                                 <th>User</th>
-                                <th>Score</th>
                                 <th>Correct Answers</th>
                                 <th>Percentage</th>
                             </tr>
@@ -28,7 +27,6 @@
                                 <tr>
                                     <td>{{ loop.index }}</td>
                                     <td>{{ score.user.name }}</td>
-                                    <td>{{ score.correct }}/{{ total_questions }}</td>
                                     <td>{{ score.correct }}/{{ score.total }}</td>
                                     <td>
                                         <div class="progress">
