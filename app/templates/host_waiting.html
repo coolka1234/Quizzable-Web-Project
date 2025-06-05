@@ -5,6 +5,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Game in Progress</h1>
+    <input type="hidden" id="quiz-id" value="{{ quiz_id }}">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
             <h3 class="text-center">Game Code: <span id="game-code">{{ game_code }}</span></h3>
@@ -28,6 +29,9 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="mt-3">
+        <button class="btn btn-secondary btn-lg w-50" onclick=results()>Show Results</button>
     </div>
 </div>
 {% endblock %}
@@ -92,5 +96,9 @@
             window.location.href = `/results/${quizId}`;
         });
     });
+    function results() {
+        const quizId = document.getElementById('quiz-id').value;
+        window.location.href = `/results/${quizId}`;
+    }
 </script>
 {% endblock %}
