@@ -2,13 +2,18 @@ from flask_sqlalchemy import SQLAlchemy
 from . import db
 
 
-
 class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+
+    results = db.relationship('Result', backref='user', cascade="all, delete-orphan")
+    answers = db.relationship('UserAnswer', backref='user', cascade="all, delete-orphan")
+    quizzes = db.relationship('Quiz', backref='user', cascade="all, delete-orphan")
+
 
 class Quiz(db.Model):
     __tablename__ = 'quizzes'
@@ -19,9 +24,8 @@ class Quiz(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
 
-    user = db.relationship('User', backref='quizzes')
-
     questions = db.relationship('Question', backref='quiz', cascade="all, delete-orphan", lazy=True)
+    results = db.relationship('Result', backref='quiz', cascade="all, delete-orphan")
 
 
 class Question(db.Model):
@@ -32,6 +36,7 @@ class Question(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
 
     answers = db.relationship('Answer', backref='question', cascade="all, delete-orphan", lazy=True)
+    user_answers = db.relationship('UserAnswer', backref='question', cascade="all, delete-orphan")
 
 
 class Answer(db.Model):
@@ -43,6 +48,8 @@ class Answer(db.Model):
     is_correct = db.Column(db.Boolean, default=False)
 
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    user_answers = db.relationship('UserAnswer', backref='answer', cascade="all, delete-orphan")
+
 
 class Result(db.Model):
     __tablename__ = 'results'
@@ -52,8 +59,6 @@ class Result(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
     score = db.Column(db.Integer, nullable=False)
 
-    user = db.relationship('User', backref='results')
-    quiz = db.relationship('Quiz', backref='results')
 
 class UserAnswer(db.Model):
     __tablename__ = 'user_answers'
@@ -63,8 +68,4 @@ class UserAnswer(db.Model):
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
     answer_id = db.Column(db.Integer, db.ForeignKey('answers.id'), nullable=False)
     game_code = db.Column(db.String(10), nullable=False)
-    
-    user = db.relationship('User', backref='answers')
-    question = db.relationship('Question', backref='user_answers')
-    answer = db.relationship('Answer', backref='user_answers')
 

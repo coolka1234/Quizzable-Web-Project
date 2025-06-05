@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    
+    <h1 class="mb-4">Admin Panel</h1>
+    
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true">
+                <i class="bi bi-people-fill me-2"></i>Users ({{ users|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="quizzes-tab" data-bs-toggle="tab" data-bs-target="#quizzes" type="button" role="tab" aria-controls="quizzes" aria-selected="false">
+                <i class="bi bi-card-checklist me-2"></i>Quizzes ({{ quizzes|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab" aria-controls="questions" aria-selected="false">
+                <i class="bi bi-question-circle me-2"></i>Questions ({{ questions|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="answers-tab" data-bs-toggle="tab" data-bs-target="#answers" type="button" role="tab" aria-controls="answers" aria-selected="false">
+                <i class="bi bi-check2-circle me-2"></i>Answers ({{ answers|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="user-answers-tab" data-bs-toggle="tab" data-bs-target="#user-answers" type="button" role="tab" aria-controls="user-answers" aria-selected="false">
+                <i class="bi bi-clipboard-check me-2"></i>User Answers ({{ user_answers|length }})
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Tab content -->
+    <div class="tab-content" id="adminTabsContent">
+        <!-- Users Tab -->
+        <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">User Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Admin Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.is_admin %}
+                                            <span class="badge bg-success">Admin</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">User</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <form action="{{ url_for('toggle_admin', user_id=user.id) }}" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-warning">
+                                                    {% if user.is_admin %}
+                                                        <i class="bi bi-person-dash me-1"></i>Remove Admin
+                                                    {% else %}
+                                                        <i class="bi bi-person-check me-1"></i>Make Admin
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                            <form action="{{ url_for('delete_item', model_type='user', item_id=user.id) }}" method="post" class="d-inline ms-2" 
+                                                  onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="bi bi-trash me-1"></i>Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quizzes Tab -->
+        <div class="tab-pane fade" id="quizzes" role="tabpanel" aria-labelledby="quizzes-tab">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Quiz Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Created By</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quiz in quizzes %}
+                                <tr>
+                                    <td>{{ quiz.id }}</td>
+                                    <td>{{ quiz.name }}</td>
+                                    <td>{{ quiz.category }}</td>
+                                    <td>{{ quiz.user.name }}</td>
+                                    <td>{{ quiz.created_at.strftime('%Y-%m-%d %H:%M') if quiz.created_at else 'N/A' }}</td>
+                                    <td>
+                                        <form action="{{ url_for('delete_item', model_type='quiz', item_id=quiz.id) }}" method="post" class="d-inline" 
+                                              onsubmit="return confirm('Are you sure you want to delete this quiz?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Question Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Text</th>
+                                    <th>Quiz</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for question in questions %}
+                                <tr>
+                                    <td>{{ question.id }}</td>
+                                    <td>{{ question.text }}</td>
+                                    <td>{{ question.quiz.name }}</td>
+                                    <td>
+                                        <form action="{{ url_for('delete_item', model_type='question', item_id=question.id) }}" method="post" class="d-inline" 
+                                              onsubmit="return confirm('Are you sure you want to delete this question?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="answers" role="tabpanel" aria-labelledby="answers-tab">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Answer Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Label</th>
+                                    <th>Text</th>
+                                    <th>Is Correct</th>
+                                    <th>Question</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for answer in answers %}
+                                <tr>
+                                    <td>{{ answer.id }}</td>
+                                    <td>{{ answer.label }}</td>
+                                    <td>{{ answer.text }}</td>
+                                    <td>
+                                        {% if answer.is_correct %}
+                                            <span class="badge bg-success">Correct</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Incorrect</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ answer.question.text|truncate(30) }}</td>
+                                    <td>
+                                        <form action="{{ url_for('delete_item', model_type='answer', item_id=answer.id) }}" method="post" class="d-inline" 
+                                              onsubmit="return confirm('Are you sure you want to delete this answer?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="user-answers" role="tabpanel" aria-labelledby="user-answers-tab">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">User Answer Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Question</th>
+                                    <th>Selected Answer</th>
+                                    <th>Game Code</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user_answer in user_answers %}
+                                <tr>
+                                    <td>{{ user_answer.id }}</td>
+                                    <td>{{ user_answer.user.name }}</td>
+                                    <td>{{ user_answer.question.text|truncate(30) }}</td>
+                                    <td>
+                                        {% if user_answer.answer %}
+                                            {{ user_answer.answer.label }}: {{ user_answer.answer.text|truncate(30) }}
+                                            {% if user_answer.answer.is_correct %}
+                                                <span class="badge bg-success">Correct</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Incorrect</span>
+                                            {% endif %}
+                                        {% else %}
+                                            Not available
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user_answer.game_code }}</td>
+                                    <td>
+                                        <form action="{{ url_for('delete_item', model_type='user_answer', item_id=user_answer.id) }}" method="post" class="d-inline" 
+                                              onsubmit="return confirm('Are you sure you want to delete this answer record?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var triggerTabList = [].slice.call(document.querySelectorAll('#adminTabs button'));
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

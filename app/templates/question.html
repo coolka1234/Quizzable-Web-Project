@@ -16,7 +16,6 @@
             <p class="lead mb-4">{{ question.text }}</p>
 
             <form id="answerForm" method="POST" action="{{ url_for('question', quiz_id=question.quiz_id, index=current_question_index + 1) }}">
-                <input type="hidden" id="player_name" name="player_name" value="">
                 <input type="hidden" name="question_id" value="{{ question.id }}">
                 <div class="list-group mb-4">
                     {% for answer in question.answers %}

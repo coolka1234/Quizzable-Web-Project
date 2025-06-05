@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, request
+from flask import render_template, redirect, url_for, request, flash, abort
 from app.models import db, User, Quiz, Question, Answer, UserAnswer
 from app.functions import generate_game_code
 from datetime import datetime, timezone
@@ -32,8 +32,9 @@ def register_routes(app, google, session, g):
                 user = User.query.filter_by(email=email).first()
                 if not user:
                     user = User(
-                        name=name, # type: ignore
-                        email=email # type: ignore
+                        name=name,
+                        email=email,
+                        is_admin=True
                     )
                     db.session.add(user)
                     db.session.commit()
@@ -48,6 +49,60 @@ def register_routes(app, google, session, g):
             session.pop(f'email_{g.tab_id}', None)
             session[tab_key] = False
             g.user = None
+
+    @app.route("/admin")
+    def admin():
+        if not g.logged_in:
+            return redirect(url_for("login_page"))
+        
+        if not hasattr(g, 'user') or not g.user or not g.user.is_admin:
+            abort(403)
+            
+        users = User.query.all()
+        quizzes = Quiz.query.all()
+        questions = Question.query.all()
+        answers = Answer.query.all()
+        user_answers = UserAnswer.query.all()
+        
+        return render_template("admin.html", 
+                               users=users, 
+                               quizzes=quizzes, 
+                               questions=questions,
+                               answers=answers,
+                               user_answers=user_answers)
+    
+    @app.route("/admin/user/<int:user_id>/toggle_admin", methods=["POST"])
+    def toggle_admin(user_id):
+        if not g.logged_in or not hasattr(g, 'user') or not g.user or not g.user.is_admin:
+            abort(403)
+            
+        user = User.query.get_or_404(user_id)
+        user.is_admin = not user.is_admin
+        db.session.commit()
+        flash(f"Admin status for {user.name} has been {'enabled' if user.is_admin else 'disabled'}")
+        return redirect(url_for("admin"))
+        
+    @app.route("/admin/delete/<string:model_type>/<int:item_id>", methods=["POST"])
+    def delete_item(model_type, item_id):
+        if not g.logged_in or not hasattr(g, 'user') or not g.user or not g.user.is_admin:
+            abort(403)
+            
+        model_map = {
+            "user": User,
+            "quiz": Quiz,
+            "question": Question,
+            "answer": Answer,
+            "user_answer": UserAnswer
+        }
+        
+        if model_type not in model_map:
+            abort(404)
+            
+        item = model_map[model_type].query.get_or_404(item_id)
+        db.session.delete(item)
+        db.session.commit()
+        flash(f"{model_type.capitalize()} has been deleted")
+        return redirect(url_for("admin"))
 
     @app.route("/")
     def login_page():
