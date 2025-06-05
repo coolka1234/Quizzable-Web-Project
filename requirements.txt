@@ -1,0 +1,14 @@
+flask==2.2.3
+flask-socketio==5.3.3
+flask-sqlalchemy==3.0.3
+flask-migrate==4.0.4
+python-dotenv==1.0.0
+eventlet==0.33.3
+gunicorn==20.1.0
+psycopg2-binary==2.9.6
+flask-dance==7.0.0
+blinker==1.6.2
+sqlalchemy==2.0.16
+gevent-websocket==0.10.1
+werkzeug==2.2.3
+cryptography==44.0.3
